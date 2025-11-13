@@ -103,11 +103,12 @@
       font-size: 11px;
       display: inline-block;
     }
-    .badge.novo { background: #e0f2fe; color: #0369a1; }
-    .badge.conversa { background: #fef3c7; color: #92400e; }
-    .badge.agendado { background: #dcfce7; color: #166534; }
-    .badge.fechado { background: #bbf7d0; color: #166534; }
-    .badge.perdido { background: #fee2e2; color: #b91c1c; }
+    .badge.novo        { background: #e0f2fe; color: #0369a1; }
+    .badge.conversa    { background: #fef3c7; color: #92400e; }
+    .badge.agendado    { background: #dcfce7; color: #166534; }
+    .badge.fechado     { background: #bbf7d0; color: #166534; }
+    .badge.perdido     { background: #fee2e2; color: #b91c1c; }
+    .badge.semretorno  { background: #e5e7eb; color: #374151; }
 
     .kpi-row {
       display: flex;
@@ -165,13 +166,27 @@
 
     <!-- FORMULÁRIO -->
     <div class="form-grid">
-      <div><label>Estabelecimento</label><input id="estabelecimento" type="text"/></div>
-      <div><label>Responsável</label><input id="responsavel" type="text"/></div>
-      <div><label>Telefone</label><input id="telefone" type="text"/></div>
+      <div>
+        <label>Estabelecimento</label>
+        <input id="estabelecimento" type="text" placeholder="Ex: Meninas de Minas – Campeche" />
+      </div>
+      <div>
+        <label>Responsável</label>
+        <input id="responsavel" type="text" placeholder="Nome do dono/gerente" />
+      </div>
+      <div>
+        <label>Telefone</label>
+        <input id="telefone" type="text" placeholder="(48) 9XXXX-XXXX" />
+      </div>
 
-      <div><label>Instagram</label><input id="instagram" type="text" placeholder="@perfil"/></div>
-      <div><label>Data da visita</label><input id="dataVisita" type="date"/></div>
-
+      <div>
+        <label>Instagram</label>
+        <input id="instagram" type="text" placeholder="@perfil" />
+      </div>
+      <div>
+        <label>Data da visita</label>
+        <input id="dataVisita" type="date" />
+      </div>
       <div>
         <label>Origem</label>
         <select id="origem">
@@ -218,17 +233,18 @@
           <option value="Agendado">Agendado</option>
           <option value="Fechado">Fechado</option>
           <option value="Perdido">Perdido</option>
+          <option value="Sem retorno">Sem retorno</option>
         </select>
       </div>
 
       <div>
         <label>Valor (R$)</label>
-        <input id="valorJob" type="number" placeholder="600"/>
+        <input id="valorJob" type="number" placeholder="600" />
       </div>
 
       <div>
         <label>Data decisão</label>
-        <input id="dataDecisao" type="date"/>
+        <input id="dataDecisao" type="date" />
       </div>
 
       <div>
@@ -240,13 +256,13 @@
           <option value="Não vê valor">Não vê valor</option>
           <option value="Já tem fornecedor">Já tem fornecedor</option>
           <option value="Sem tempo">Sem tempo</option>
+          <option value="Sem retorno">Sem retorno</option>
         </select>
       </div>
-
     </div>
 
     <label>Próximo passo</label>
-    <textarea id="proximoPasso"></textarea>
+    <textarea id="proximoPasso" placeholder="Ex: Enviar DM, ligar tal dia, marcar horário de gravação..."></textarea>
 
     <div class="actions">
       <button class="primary" onclick="salvarLead()">Salvar lead</button>
@@ -279,6 +295,7 @@
           <option value="Agendado">Agendado</option>
           <option value="Fechado">Fechado</option>
           <option value="Perdido">Perdido</option>
+          <option value="Sem retorno">Sem retorno</option>
         </select>
       </div>
       <div>
@@ -351,6 +368,7 @@ let leads = [];
 let indiceEdicao = null;
 const el = id => document.getElementById(id);
 
+// chave para mesclar imports (nome + telefone "seco")
 function chaveLead(l){
   return (l.estab || "").toLowerCase().trim() + "|" +
          (l.tel || "").replace(/\D/g,"");
@@ -358,32 +376,43 @@ function chaveLead(l){
 
 function carregarLeads(){
   const salvo = localStorage.getItem("painelProspecaoRafa_v3");
-  if(salvo){ leads = JSON.parse(salvo); }
+  if(salvo){
+    try {
+      leads = JSON.parse(salvo) || [];
+    } catch(e){
+      leads = [];
+    }
+  }
   renderTabela();
 }
-function salvarLocal(){ localStorage.setItem("painelProspecaoRafa_v3", JSON.stringify(leads)); }
+function salvarLocal(){
+  localStorage.setItem("painelProspecaoRafa_v3", JSON.stringify(leads));
+}
 
 function salvarLead(){
   const estab = el("estabelecimento").value.trim();
   if(!estab){
-    alert("Coloque o nome do estabelecimento");
+    alert("Coloque o nome do estabelecimento.");
     return;
   }
+
+  const hoje = new Date();
+  const hojeStr = hoje.toISOString().slice(0,10);
 
   const l = {
     estab,
     resp: el("responsavel").value.trim(),
     tel: el("telefone").value.trim(),
     instagram: el("instagram").value.trim(),
-    data: el("dataVisita").value || new Date().toISOString().slice(0,10),
+    data: el("dataVisita").value || hojeStr,
     origem: el("origem").value,
     categoria: el("categoria").value,
     produto: el("produto").value || "Não definido",
     status: el("status").value,
-    valorJob: el("valorJob").value || "600",
-    dataDecisao: el("dataDecisao").value || new Date(Date.now()+3*86400000).toISOString().slice(0,10),
+    valorJob: el("valorJob").value || "",
+    dataDecisao: el("dataDecisao").value || "",
     motivoPerda: el("motivoPerda").value,
-    proximoPasso: el("proximoPasso").value.trim() || "Fazer follow-up"
+    proximoPasso: el("proximoPasso").value.trim()
   };
 
   if(indiceEdicao !== null){
@@ -399,10 +428,10 @@ function salvarLead(){
   renderTabela();
 }
 
+// limpa só o formulário, não mexe nos filtros
 function limparFormulario(reset=true){
-  // Limpa apenas campos do formulário, não mexe nos filtros
-  document.querySelectorAll(".form-grid input").forEach(elm=>elm.value="");
-  document.querySelectorAll(".form-grid select").forEach(elm=>elm.value="");
+  document.querySelectorAll(".form-grid input").forEach(i => i.value = "");
+  document.querySelectorAll(".form-grid select").forEach(s => s.value = "");
   el("proximoPasso").value = "";
 
   el("status").value = "Novo";
@@ -410,18 +439,19 @@ function limparFormulario(reset=true){
 
   if(reset){
     indiceEdicao = null;
-    el("modoEdicao").textContent="";
+    el("modoEdicao").textContent = "";
   }
 }
 
-function badge(c){
+function badgeClasse(c){
   switch(c){
-    case "Novo": return "badge novo";
-    case "Em conversa": return "badge conversa";
-    case "Agendado": return "badge agendado";
-    case "Fechado": return "badge fechado";
-    case "Perdido": return "badge perdido";
-    default: return "badge";
+    case "Novo":          return "badge novo";
+    case "Em conversa":   return "badge conversa";
+    case "Agendado":      return "badge agendado";
+    case "Fechado":       return "badge fechado";
+    case "Perdido":       return "badge perdido";
+    case "Sem retorno":   return "badge semretorno";
+    default:              return "badge";
   }
 }
 
@@ -434,7 +464,10 @@ function aplicarFiltros(lista){
 
   return lista.filter(l => {
     if(fStatus !== "Todos" && l.status !== fStatus) return false;
-    if(fProd !== "Todos" && (l.produto || "Não definido") !== fProd) return false;
+
+    const prod = l.produto || "Não definido";
+    if(fProd !== "Todos" && prod !== fProd) return false;
+
     if(fCat !== "Todas" && l.categoria !== fCat) return false;
 
     if(fPrazo !== "Todos"){
@@ -450,41 +483,42 @@ function aplicarFiltros(lista){
 
 function renderTabela(){
   const tbody = el("tabelaLeads");
-  tbody.innerHTML="";
+  tbody.innerHTML = "";
 
   const filtrados = aplicarFiltros(leads);
 
   let total=0, fech=0, per=0, ag=0, estimado=0;
 
-  filtrados.forEach(l=>{
+  filtrados.forEach(l => {
     total++;
-    if(l.status==="Fechado") fech++;
-    if(l.status==="Perdido") per++;
-    if(l.status==="Agendado") ag++;
-    estimado += parseFloat(l.valorJob||0);
+    if(l.status === "Fechado")  fech++;
+    if(l.status === "Perdido")  per++;
+    if(l.status === "Agendado") ag++;
+    estimado += parseFloat(l.valorJob || 0);
 
     const idx = leads.indexOf(l);
-
     const tr = document.createElement("tr");
+
     tr.innerHTML = `
-      <td>${l.estab}</td>
+      <td>${l.estab || ""}</td>
       <td>${l.instagram || ""}</td>
-      <td>${l.categoria||""}</td>
-      <td>${l.produto||""}</td>
-      <td>${l.resp||""}</td>
-      <td>${l.tel||""}</td>
-      <td>${l.origem||""}</td>
-      <td>${l.data||""}</td>
-      <td><span class="${badge(l.status)}">${l.status||""}</span></td>
-      <td>${l.valorJob||""}</td>
-      <td>${l.dataDecisao||""}</td>
-      <td>${l.motivoPerda||""}</td>
-      <td>${(l.proximoPasso||"").replace(/\n/g,"<br>")}</td>
+      <td>${l.categoria || ""}</td>
+      <td>${l.produto || ""}</td>
+      <td>${l.resp || ""}</td>
+      <td>${l.tel || ""}</td>
+      <td>${l.origem || ""}</td>
+      <td>${l.data || ""}</td>
+      <td><span class="${badgeClasse(l.status)}">${l.status || ""}</span></td>
+      <td>${l.valorJob || ""}</td>
+      <td>${l.dataDecisao || ""}</td>
+      <td>${l.motivoPerda || ""}</td>
+      <td>${(l.proximoPasso || "").replace(/\n/g,"<br>")}</td>
       <td class="acoes">
         <div class="acao-group">
           <button class="acao-btn primary" onclick="editarLead(${idx})">Editar</button>
           <button class="acao-btn" onclick="marcarFechado(${idx})">Fechou 600</button>
           <button class="acao-btn" onclick="agendarFollowUp(${idx})">Follow-up +3d</button>
+          <button class="acao-btn" onclick="marcarSemRetorno(${idx})">Sem retorno</button>
           <button class="acao-btn" onclick="marcarPerdido(${idx})">Perdido</button>
           <button class="acao-btn danger" onclick="removerLead(${idx})">X</button>
         </div>
@@ -493,11 +527,11 @@ function renderTabela(){
     tbody.appendChild(tr);
   });
 
-  el("totalLeads").textContent=total;
-  el("kpiFechados").textContent=fech;
-  el("kpiPerdidos").textContent=per;
-  el("kpiAgendados").textContent=ag;
-  el("kpiValorTotal").textContent=estimado.toFixed(0);
+  el("totalLeads").textContent     = total;
+  el("kpiFechados").textContent    = fech;
+  el("kpiPerdidos").textContent    = per;
+  el("kpiAgendados").textContent   = ag;
+  el("kpiValorTotal").textContent  = estimado.toFixed(0);
 }
 
 function limparFiltros(){
@@ -511,18 +545,19 @@ function limparFiltros(){
 function editarLead(i){
   const l = leads[i];
   el("estabelecimento").value = l.estab || "";
-  el("responsavel").value = l.resp || "";
-  el("telefone").value = l.tel || "";
-  el("instagram").value = l.instagram || "";
-  el("dataVisita").value = l.data || "";
-  el("origem").value = l.origem || "Presencial";
-  el("categoria").value = l.categoria || "";
-  el("produto").value = l.produto && l.produto !== "Não definido" ? l.produto : "";
-  el("status").value = l.status || "Novo";
-  el("valorJob").value = l.valorJob || "";
-  el("dataDecisao").value = l.dataDecisao || "";
-  el("motivoPerda").value = l.motivoPerda || "";
-  el("proximoPasso").value = l.proximoPasso || "";
+  el("responsavel").value     = l.resp || "";
+  el("telefone").value        = l.tel || "";
+  el("instagram").value       = l.instagram || "";
+  el("dataVisita").value      = l.data || "";
+  el("origem").value          = l.origem || "Presencial";
+  el("categoria").value       = l.categoria || "";
+  el("produto").value         = (l.produto && l.produto !== "Não definido") ? l.produto : "";
+  el("status").value          = l.status || "Novo";
+  el("valorJob").value        = l.valorJob || "";
+  el("dataDecisao").value     = l.dataDecisao || "";
+  el("motivoPerda").value     = l.motivoPerda || "";
+  el("proximoPasso").value    = l.proximoPasso || "";
+
   indiceEdicao = i;
   el("modoEdicao").textContent = "Editando: " + (l.estab || "");
 }
@@ -535,23 +570,39 @@ function removerLead(i){
 }
 
 function marcarFechado(i){
-  leads[i].status="Fechado";
-  if(!leads[i].valorJob || leads[i].valorJob==="0") leads[i].valorJob="600";
-  salvarLocal(); renderTabela();
+  const l = leads[i];
+  l.status = "Fechado";
+  if(!l.valorJob || l.valorJob === "0") l.valorJob = "600";
+  salvarLocal();
+  renderTabela();
+}
+
+function marcarSemRetorno(i){
+  const l = leads[i];
+  l.status = "Sem retorno";
+  if(!l.motivoPerda) l.motivoPerda = "Sem retorno";
+  salvarLocal();
+  renderTabela();
 }
 
 function marcarPerdido(i){
-  leads[i].status="Perdido";
-  if(!leads[i].motivoPerda) leads[i].motivoPerda="Sem caixa";
-  salvarLocal(); renderTabela();
+  const l = leads[i];
+  l.status = "Perdido";
+  if(!l.motivoPerda) l.motivoPerda = "Sem retorno";
+  salvarLocal();
+  renderTabela();
 }
 
 function agendarFollowUp(i){
+  const l = leads[i];
   const d = new Date();
-  d.setDate(d.getDate()+3);
-  leads[i].dataDecisao = d.toISOString().slice(0,10);
-  if(!leads[i].proximoPasso) leads[i].proximoPasso="Fazer follow-up";
-  salvarLocal(); renderTabela();
+  d.setDate(d.getDate() + 3);
+  l.dataDecisao = d.toISOString().slice(0,10);
+  if(!l.proximoPasso){
+    l.proximoPasso = "Fazer follow-up até a data de decisão.";
+  }
+  salvarLocal();
+  renderTabela();
 }
 
 function exportarLeads(){
@@ -561,29 +612,30 @@ function exportarLeads(){
   }
   const txt = JSON.stringify(leads, null, 2);
   navigator.clipboard.writeText(txt).then(()=>{
-    alert("Copiado! Cole no outro dispositivo para importar.");
+    alert("Copiado para a área de transferência. Cole no outro dispositivo para importar.");
   }).catch(()=>{
     prompt("Copie os dados:", txt);
   });
 }
 
 function importarLeads(){
-  const texto = prompt("Cole aqui os dados exportados:");
+  const texto = prompt("Cole aqui os dados exportados (JSON):");
   if(!texto) return;
 
-  try{
+  try {
     const arr = JSON.parse(texto);
     if(!Array.isArray(arr)){
-      alert("Formato inválido!");
+      alert("Formato inválido (esperado um array JSON).");
       return;
     }
 
     const mapa = new Map();
-    leads.forEach((l,i)=> mapa.set(chaveLead(l), i));
+    leads.forEach((l, i) => mapa.set(chaveLead(l), i));
 
-    let adicionados=0, atualizados=0;
+    let adicionados = 0;
+    let atualizados = 0;
 
-    arr.forEach(l=>{
+    arr.forEach(l => {
       const c = chaveLead(l);
       if(mapa.has(c)){
         leads[ mapa.get(c) ] = l;
@@ -596,11 +648,18 @@ function importarLeads(){
 
     salvarLocal();
     renderTabela();
-
-    alert(`Importado.\nNovos: ${adicionados}\nAtualizados: ${atualizados}`);
+    alert(`Importação concluída.\nNovos: ${adicionados}\nAtualizados: ${atualizados}`);
   } catch(e){
-    alert("JSON inválido.");
+    alert("JSON inválido. Verifique o conteúdo colado.");
   }
+}
+
+function apagarTudo(){
+  if(!confirm("Tem certeza absoluta? Isso apaga TODOS os leads salvos.")) return;
+  leads = [];
+  salvarLocal();
+  renderTabela();
+  limparFormulario();
 }
 
 carregarLeads();
