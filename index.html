@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Painel de Prospecção – Rafa</title>
   <style>
     body {
@@ -10,9 +11,7 @@
       margin: 0;
       padding: 20px;
     }
-    h1 {
-      margin-top: 0;
-    }
+    h1 { margin-top: 0; }
     .container {
       max-width: 1200px;
       margin: 0 auto;
@@ -43,6 +42,7 @@
       box-sizing: border-box;
     }
     textarea { min-height: 60px; resize: vertical; }
+
     .actions {
       display: flex;
       gap: 8px;
@@ -119,7 +119,18 @@
       color: #374151;
     }
 
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+
     @media (max-width: 900px) {
+      body { padding: 10px; }
+      .container {
+        padding: 14px;
+        border-radius: 8px;
+        box-shadow: none;
+      }
       .form-grid { grid-template-columns: 1fr; }
       th, td { font-size: 11px; }
       .acao-btn { font-size: 9px; padding: 3px 4px; }
@@ -131,7 +142,7 @@
   <div class="container">
 
     <h1>Painel de Prospecção – Pacote Temporada</h1>
-    <p class="muted">
+    <p style="font-size:12px;color:#6b7280;">
       Registre aqui os estabelecimentos que você abordar. Os dados ficam salvos no navegador (localStorage).
     </p>
 
@@ -280,36 +291,41 @@
       <span><strong>Estimado:</strong> R$ <span id="kpiValorTotal">0</span></span>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Estabelecimento</th>
-          <th>Cat.</th>
-          <th>Produto</th>
-          <th>Resp.</th>
-          <th>Tel</th>
-          <th>Origem</th>
-          <th>Data</th>
-          <th>Pot.</th>
-          <th>Int.</th>
-          <th>Status</th>
-          <th>Urg.</th>
-          <th>Decisor</th>
-          <th>R$</th>
-          <th>Decisão</th>
-          <th>Perda</th>
-          <th>Próx passo</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaLeads"></tbody>
-    </table>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Estabelecimento</th>
+            <th>Cat.</th>
+            <th>Produto</th>
+            <th>Resp.</th>
+            <th>Tel</th>
+            <th>Origem</th>
+            <th>Data</th>
+            <th>Pot.</th>
+            <th>Int.</th>
+            <th>Status</th>
+            <th>Urg.</th>
+            <th>Decisor</th>
+            <th>R$</th>
+            <th>Decisão</th>
+            <th>Perda</th>
+            <th>Próx passo</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaLeads"></tbody>
+      </table>
+    </div>
 
   </div>
 
 <script>
 let leads = [];
 let indiceEdicao = null;
+
+// atalhos pros inputs (evita colisão com window.status etc)
+const el = id => document.getElementById(id);
 
 function chaveLead(l){
   return (l.estab || "").toLowerCase().trim() + "|" +
@@ -324,34 +340,35 @@ function carregarLeads(){
 function salvarLocal(){ localStorage.setItem("painelProspecaoRafa_v3", JSON.stringify(leads)); }
 
 function salvarLead(){
-  const l = {
-    estab: estabelecimento.value.trim(),
-    resp: responsavel.value.trim(),
-    tel: telefone.value.trim(),
-    data: dataVisita.value || new Date().toISOString().slice(0,10),
-    origem: origem.value,
-    categoria: categoria.value,
-    produto: produto.value,
-    potencial: potencial.value || "2",
-    interesse: interesse.value,
-    status: status.value,
-    urgencia: urgencia.value,
-    decisor: decisor.value,
-    valorJob: valorJob.value || "600",
-    dataDecisao: dataDecisao.value || new Date(Date.now()+3*86400000).toISOString().slice(0,10),
-    motivoPerda: motivoPerda.value,
-    proximoPasso: proximoPasso.value.trim() || "Fazer follow-up"
-  };
-
-  if(!l.estab){
+  const estab = el("estabelecimento").value.trim();
+  if(!estab){
     alert("Coloque o nome do estabelecimento");
     return;
   }
 
+  const l = {
+    estab,
+    resp: el("responsavel").value.trim(),
+    tel: el("telefone").value.trim(),
+    data: el("dataVisita").value || new Date().toISOString().slice(0,10),
+    origem: el("origem").value,
+    categoria: el("categoria").value,
+    produto: el("produto").value,
+    potencial: el("potencial").value || "2",
+    interesse: el("interesse").value,
+    status: el("status").value,
+    urgencia: el("urgencia").value,
+    decisor: el("decisor").value,
+    valorJob: el("valorJob").value || "600",
+    dataDecisao: el("dataDecisao").value || new Date(Date.now()+3*86400000).toISOString().slice(0,10),
+    motivoPerda: el("motivoPerda").value,
+    proximoPasso: el("proximoPasso").value.trim() || "Fazer follow-up"
+  };
+
   if(indiceEdicao !== null){
     leads[indiceEdicao] = l;
     indiceEdicao = null;
-    modoEdicao.textContent = "";
+    el("modoEdicao").textContent = "";
   } else {
     leads.push(l);
   }
@@ -362,15 +379,15 @@ function salvarLead(){
 }
 
 function limparFormulario(reset=true){
-  document.querySelectorAll("input, textarea").forEach(el=>el.value="");
-  document.querySelectorAll("select").forEach(el=>el.value="");
+  document.querySelectorAll("input, textarea").forEach(elm=>elm.value="");
+  document.querySelectorAll("select").forEach(elm=>elm.value="");
 
-  status.value = "Novo";
-  origem.value = "Presencial";
+  el("status").value = "Novo";
+  el("origem").value = "Presencial";
 
   if(reset){
     indiceEdicao = null;
-    modoEdicao.textContent="";
+    el("modoEdicao").textContent="";
   }
 }
 
@@ -386,7 +403,7 @@ function badge(c){
 }
 
 function renderTabela(){
-  const tbody = tabelaLeads;
+  const tbody = el("tabelaLeads");
   tbody.innerHTML="";
 
   let total=0, fech=0, per=0, ag=0, estimado=0;
@@ -409,7 +426,7 @@ function renderTabela(){
       <td>${l.data||""}</td>
       <td>${l.potencial||""}</td>
       <td>${l.interesse||""}</td>
-      <td><span class="${badge(l.status)}">${l.status}</span></td>
+      <td><span class="${badge(l.status)}">${l.status||""}</span></td>
       <td>${l.urgencia||""}</td>
       <td>${l.decisor||""}</td>
       <td>${l.valorJob||""}</td>
@@ -429,33 +446,33 @@ function renderTabela(){
     tbody.appendChild(tr);
   });
 
-  totalLeads.textContent=total;
-  kpiFechados.textContent=fech;
-  kpiPerdidos.textContent=per;
-  kpiAgendados.textContent=ag;
-  kpiValorTotal.textContent=estimado.toFixed(0);
+  el("totalLeads").textContent=total;
+  el("kpiFechados").textContent=fech;
+  el("kpiPerdidos").textContent=per;
+  el("kpiAgendados").textContent=ag;
+  el("kpiValorTotal").textContent=estimado.toFixed(0);
 }
 
 function editarLead(i){
   const l = leads[i];
-  estabelecimento.value = l.estab;
-  responsavel.value = l.resp;
-  telefone.value = l.tel;
-  dataVisita.value = l.data;
-  origem.value = l.origem;
-  categoria.value = l.categoria;
-  produto.value = l.produto;
-  potencial.value = l.potencial;
-  interesse.value = l.interesse;
-  status.value = l.status;
-  urgencia.value = l.urgencia;
-  decisor.value = l.decisor;
-  valorJob.value = l.valorJob;
-  dataDecisao.value = l.dataDecisao;
-  motivoPerda.value = l.motivoPerda;
-  proximoPasso.value = l.proximoPasso;
+  el("estabelecimento").value = l.estab || "";
+  el("responsavel").value = l.resp || "";
+  el("telefone").value = l.tel || "";
+  el("dataVisita").value = l.data || "";
+  el("origem").value = l.origem || "Presencial";
+  el("categoria").value = l.categoria || "";
+  el("produto").value = l.produto || "";
+  el("potencial").value = l.potencial || "";
+  el("interesse").value = l.interesse || "";
+  el("status").value = l.status || "Novo";
+  el("urgencia").value = l.urgencia || "";
+  el("decisor").value = l.decisor || "";
+  el("valorJob").value = l.valorJob || "";
+  el("dataDecisao").value = l.dataDecisao || "";
+  el("motivoPerda").value = l.motivoPerda || "";
+  el("proximoPasso").value = l.proximoPasso || "";
   indiceEdicao = i;
-  modoEdicao.textContent = "Editando: " + l.estab;
+  el("modoEdicao").textContent = "Editando: " + (l.estab || "");
 }
 
 function removerLead(i){
@@ -473,7 +490,7 @@ function marcarFechado(i){
 
 function marcarPerdido(i){
   leads[i].status="Perdido";
-  leads[i].motivoPerda="Sem caixa";
+  if(!leads[i].motivoPerda) leads[i].motivoPerda="Sem caixa";
   salvarLocal(); renderTabela();
 }
 
@@ -486,9 +503,17 @@ function agendarFollowUp(i){
 }
 
 function exportarLeads(){
+  if(!leads.length){
+    alert("Não há leads para exportar.");
+    return;
+  }
   const txt = JSON.stringify(leads, null, 2);
-  navigator.clipboard.writeText(txt);
-  alert("Copiado! Cole no outro dispositivo para importar.");
+  navigator.clipboard.writeText(txt).then(()=>{
+    alert("Copiado! Cole no outro dispositivo para importar.");
+  }).catch(()=>{
+    // fallback
+    prompt("Copie os dados:", txt);
+  });
 }
 
 function importarLeads(){
@@ -502,7 +527,6 @@ function importarLeads(){
       return;
     }
 
-    // mapa chave -> índice
     const mapa = new Map();
     leads.forEach((l,i)=> mapa.set(chaveLead(l), i));
 
@@ -523,7 +547,6 @@ function importarLeads(){
     renderTabela();
 
     alert(`Importado.\nNovos: ${adicionados}\nAtualizados: ${atualizados}`);
-
   } catch(e){
     alert("JSON inválido.");
   }
