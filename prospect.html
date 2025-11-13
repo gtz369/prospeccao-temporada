@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Painel de Prospecção – Rafa</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f7;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      margin-top: 0;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #444;
+      display: block;
+      margin-bottom: 4px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+      box-sizing: border-box;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin: 8px 0 16px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    button {
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: none;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.primary {
+      background: #111827;
+      color: #fff;
+    }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    button.danger {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      padding: 6px 4px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #6b7280;
+      white-space: nowrap;
+    }
+    tr:hover {
+      background: #f9fafb;
+    }
+    .badge {
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      display: inline-block;
+    }
+    .badge.novo { background: #e0f2fe; color: #0369a1; }
+    .badge.conversa { background: #fef3c7; color: #92400e; }
+    .badge.agendado { background: #dcfce7; color: #166534; }
+    .badge.fechado { background: #bbf7d0; color: #166534; }
+    .badge.perdido { background: #fee2e2; color: #b91c1c; }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .top-bar select {
+      width: auto;
+    }
+    .muted {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .kpi-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 12px;
+      margin-bottom: 10px;
+      color: #374151;
+    }
+    .kpi-row span strong {
+      font-weight: 700;
+    }
+    @media (max-width: 900px) {
+      .form-grid {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+      }
+      th, td {
+        font-size: 11px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Painel de Prospecção – Pacote Temporada</h1>
+    <p class="muted">
+      Registre aqui os estabelecimentos que você abordar, com status, produto e próximos passos.
+      Os dados ficam salvos no seu navegador (localStorage).
+    </p>
+
+    <h2>+ Novo Lead / Atualizar Lead</h2>
+    <div class="form-grid">
+      <div>
+        <label>Estabelecimento</label>
+        <input id="estabelecimento" type="text" placeholder="Ex: Delícias Caramelli" />
+      </div>
+      <div>
+        <label>Responsável</label>
+        <input id="responsavel" type="text" placeholder="Nome do dono/gerente" />
+      </div>
+      <div>
+        <label>Telefone / WhatsApp</label>
+        <input id="telefone" type="text" placeholder="(48) 9XXXX-XXXX" />
+      </div>
+
+      <div>
+        <label>Data da visita / contato</label>
+        <input id="dataVisita" type="date" />
+      </div>
+      <div>
+        <label>Origem do contato</label>
+        <select id="origem">
+          <option value="Presencial">Presencial</option>
+          <option value="Instagram">Instagram</option>
+          <option value="WhatsApp">WhatsApp</option>
+          <option value="Telefone">Telefone</option>
+          <option value="Indicação">Indicação</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+      <div>
+        <label>Categoria do negócio</label>
+        <select id="categoria">
+          <option value="">Selecione</option>
+          <option value="Restaurante">Restaurante</option>
+          <option value="Café / Padaria">Café / Padaria</option>
+          <option value="Sorveteria / Açaí">Sorveteria / Açaí</option>
+          <option value="Bar / Pub">Bar / Pub</option>
+          <option value="Loja de Roupas / Surf">Loja de Roupas / Surf</option>
+          <option value="Petshop">Petshop</option>
+          <option value="Clínica Estética / Beleza">Clínica Estética / Beleza</option>
+          <option value="Academia / Studio">Academia / Studio</option>
+          <option value="Mercado / Empório">Mercado / Empório</option>
+          <option value="Outro comércio">Outro comércio</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Produto</label>
+        <select id="produto">
+          <option value="">Não definido</option>
+          <option value="Pacote Vídeos Temporada">Pacote Vídeos Temporada</option>
+          <option value="Tratamento Imagens iFood">Tratamento Imagens iFood</option>
+          <option value="Ambos">Ambos</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+      <div>
+        <label>Potencial</label>
+        <select id="potencial">
+          <option value="">? (avaliar)</option>
+          <option value="1">1 – Baixo</option>
+          <option value="2">2 – Médio</option>
+          <option value="3">3 – Alto</option>
+        </select>
+      </div>
+      <div>
+        <label>Interesse</label>
+        <select id="interesse">
+          <option value="">Selecione</option>
+          <option value="Sim">Sim</option>
+          <option value="Talvez">Talvez</option>
+          <option value="Não">Não</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Status</label>
+        <select id="status">
+          <option value="Novo">Novo</option>
+          <option value="Em conversa">Em conversa</option>
+          <option value="Agendado">Agendado</option>
+          <option value="Fechado">Fechado</option>
+          <option value="Perdido">Perdido</option>
+        </select>
+      </div>
+      <div>
+        <label>Urgência</label>
+        <select id="urgencia">
+          <option value="">Não avaliada</option>
+          <option value="Alta">Alta</option>
+          <option value="Média">Média</option>
+          <option value="Baixa">Baixa</option>
+        </select>
+      </div>
+      <div>
+        <label>Decisor presente?</label>
+        <select id="decisor">
+          <option value="">Não marcado</option>
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
+          <option value="Não estava">Não estava</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Valor do job (R$)</label>
+        <input id="valorJob" type="number" min="0" step="50" placeholder="600" />
+      </div>
+      <div>
+        <label>Data prevista de decisão</label>
+        <input id="dataDecisao" type="date" />
+      </div>
+      <div>
+        <label>Motivo da perda (se for o caso)</label>
+        <select id="motivoPerda">
+          <option value="">Nenhum / Ainda em aberto</option>
+          <option value="Preço">Preço</option>
+          <option value="Sem caixa">Sem caixa</option>
+          <option value="Já tem fornecedor">Já tem fornecedor</option>
+          <option value="Não vê valor">Não vê valor</option>
+          <option value="Sem tempo">Sem tempo</option>
+          <option value="Decisor ausente">Decisor ausente</option>
+          <option value="Pós-temporada">Quer depois da temporada</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label>Próximo passo / Observações</label>
+      <textarea id="proximoPasso" placeholder="Ex: Enviar vídeo de referência amanhã, ligar na quinta, combinar horário de gravação, etc."></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="primary" onclick="salvarLead()">Salvar lead</button>
+      <button class="secondary" onclick="limparFormulario()">Limpar formulário</button>
+      <button class="danger" onclick="apagarTudo()">Apagar tudo (cuidado)</button>
+      <span id="modoEdicao" class="muted"></span>
+    </div>
+
+    <div class="top-bar">
+      <div class="kpi-row">
+        <span><strong>Total de leads:</strong> <span id="totalLeads">0</span></span>
+        <span>• <strong>Fechados:</strong> <span id="kpiFechados">0</span></span>
+        <span>• <strong>Perdidos:</strong> <span id="kpiPerdidos">0</span></span>
+        <span>• <strong>Agendados:</strong> <span id="kpiAgendados">0</span></span>
+        <span>• <strong>Estimado (R$):</strong> <span id="kpiValorTotal">0</span></span>
+        <span>• <strong>Vídeo:</strong> <span id="kpiVideo">0</span></span>
+        <span>• <strong>Imagens:</strong> <span id="kpiImagens">0</span></span>
+      </div>
+      <div>
+        <label for="filtroStatus"><strong>Filtrar por status:</strong></label>
+        <select id="filtroStatus" onchange="renderTabela()">
+          <option value="Todos">Todos</option>
+          <option value="Novo">Novo</option>
+          <option value="Em conversa">Em conversa</option>
+          <option value="Agendado">Agendado</option>
+          <option value="Fechado">Fechado</option>
+          <option value="Perdido">Perdido</option>
+        </select>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Estabelecimento</th>
+          <th>Cat.</th>
+          <th>Produto</th>
+          <th>Resp.</th>
+          <th>Tel</th>
+          <th>Origem</th>
+          <th>Data visita</th>
+          <th>Pot.</th>
+          <th>Int.</th>
+          <th>Status</th>
+          <th>Urg.</th>
+          <th>Decisor</th>
+          <th>Valor (R$)</th>
+          <th>Decisão</th>
+          <th>Motivo perda</th>
+          <th>Próximo passo</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaLeads">
+        <!-- linhas via JS -->
+      </tbody>
+    </table>
+
+  </div>
+
+  <script>
+    let leads = [];
+    let indiceEdicao = null;
+
+    function carregarLeads() {
+      const salvo = localStorage.getItem("painelProspecaoRafa_v3");
+      if (salvo) {
+        leads = JSON.parse(salvo);
+      } else {
+        leads = [];
+      }
+      renderTabela();
+    }
+
+    function salvarLocal() {
+      localStorage.setItem("painelProspecaoRafa_v3", JSON.stringify(leads));
+    }
+
+    function salvarLead() {
+      const estab = document.getElementById("estabelecimento").value.trim();
+      const resp = document.getElementById("responsavel").value.trim();
+      const tel = document.getElementById("telefone").value.trim();
+      let data = document.getElementById("dataVisita").value;
+      let origem = document.getElementById("origem").value;
+      const categoria = document.getElementById("categoria").value;
+      const produto = document.getElementById("produto").value;
+      let potencial = document.getElementById("potencial").value;
+      const interesse = document.getElementById("interesse").value;
+      const status = document.getElementById("status").value;
+      const urgencia = document.getElementById("urgencia").value;
+      const decisor = document.getElementById("decisor").value;
+      let valorJob = document.getElementById("valorJob").value;
+      let dataDecisao = document.getElementById("dataDecisao").value;
+      const motivoPerda = document.getElementById("motivoPerda").value;
+      let proximoPasso = document.getElementById("proximoPasso").value.trim();
+
+      if (!estab) {
+        alert("Coloca pelo menos o nome do estabelecimento.");
+        return;
+      }
+
+      // Defaults automáticos
+      if (!data) {
+        const hoje = new Date();
+        data = hoje.toISOString().slice(0, 10);
+      }
+      if (!origem) {
+        origem = "Presencial";
+      }
+      if (!potencial) {
+        potencial = "2"; // médio
+      }
+      if (!valorJob) {
+        valorJob = "600";
+      }
+      if (!dataDecisao) {
+        const d = new Date();
+        d.setDate(d.getDate() + 3);
+        dataDecisao = d.toISOString().slice(0, 10);
+      }
+      if (!proximoPasso) {
+        proximoPasso = "Fazer follow-up até a data de decisão.";
+      }
+
+      const lead = {
+        estab,
+        resp,
+        tel,
+        data,
+        origem,
+        categoria,
+        produto,
+        potencial,
+        interesse,
+        status,
+        urgencia,
+        decisor,
+        valorJob,
+        dataDecisao,
+        motivoPerda,
+        proximoPasso
+      };
+
+      if (indiceEdicao !== null) {
+        leads[indiceEdicao] = lead;
+        indiceEdicao = null;
+        document.getElementById("modoEdicao").textContent = "";
+      } else {
+        leads.push(lead);
+      }
+
+      salvarLocal();
+      renderTabela();
+      limparFormulario(false);
+    }
+
+    function limparFormulario(resetEdicao = true) {
+      document.getElementById("estabelecimento").value = "";
+      document.getElementById("responsavel").value = "";
+      document.getElementById("telefone").value = "";
+      document.getElementById("dataVisita").value = "";
+      document.getElementById("origem").value = "Presencial";
+      document.getElementById("categoria").value = "";
+      document.getElementById("produto").value = "";
+      document.getElementById("potencial").value = "";
+      document.getElementById("interesse").value = "";
+      document.getElementById("status").value = "Novo";
+      document.getElementById("urgencia").value = "";
+      document.getElementById("decisor").value = "";
+      document.getElementById("valorJob").value = "";
+      document.getElementById("dataDecisao").value = "";
+      document.getElementById("motivoPerda").value = "";
+      document.getElementById("proximoPasso").value = "";
+      if (resetEdicao) {
+        indiceEdicao = null;
+        document.getElementById("modoEdicao").textContent = "";
+      }
+    }
+
+    function badgeClasse(status) {
+      switch (status) {
+        case "Novo": return "badge novo";
+        case "Em conversa": return "badge conversa";
+        case "Agendado": return "badge agendado";
+        case "Fechado": return "badge fechado";
+        case "Perdido": return "badge perdido";
+        default: return "badge";
+      }
+    }
+
+    function renderTabela() {
+      const corpo = document.getElementById("tabelaLeads");
+      const filtro = document.getElementById("filtroStatus").value;
+      corpo.innerHTML = "";
+
+      let total = leads.length;
+      let fechados = 0;
+      let perdidos = 0;
+      let agendados = 0;
+      let valorTotal = 0;
+      let contVideo = 0;
+      let contImagens = 0;
+
+      const filtrados = leads.filter(l => {
+        if (filtro === "Todos") return true;
+        return l.status === filtro;
+      });
+
+      leads.forEach(l => {
+        if (l.status === "Fechado") fechados++;
+        if (l.status === "Perdido") perdidos++;
+        if (l.status === "Agendado") agendados++;
+        const v = parseFloat(l.valorJob || "0");
+        if (!isNaN(v)) valorTotal += v;
+
+        if (l.produto === "Pacote Vídeos Temporada" || l.produto === "Ambos") {
+          contVideo++;
+        }
+        if (l.produto === "Tratamento Imagens iFood" || l.produto === "Ambos") {
+          contImagens++;
+        }
+      });
+
+      document.getElementById("totalLeads").textContent = total;
+      document.getElementById("kpiFechados").textContent = fechados;
+      document.getElementById("kpiPerdidos").textContent = perdidos;
+      document.getElementById("kpiAgendados").textContent = agendados;
+      document.getElementById("kpiValorTotal").textContent = valorTotal.toFixed(0);
+      document.getElementById("kpiVideo").textContent = contVideo;
+      document.getElementById("kpiImagens").textContent = contImagens;
+
+      filtrados.forEach(l => {
+        const idx = leads.indexOf(l);
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td>${l.estab || ""}</td>
+          <td>${l.categoria || ""}</td>
+          <td>${l.produto || ""}</td>
+          <td>${l.resp || ""}</td>
+          <td>${l.tel || ""}</td>
+          <td>${l.origem || ""}</td>
+          <td>${l.data || ""}</td>
+          <td>${l.potencial || ""}</td>
+          <td>${l.interesse || ""}</td>
+          <td><span class="${badgeClasse(l.status)}">${l.status || ""}</span></td>
+          <td>${l.urgencia || ""}</td>
+          <td>${l.decisor || ""}</td>
+          <td>${l.valorJob || ""}</td>
+          <td>${l.dataDecisao || ""}</td>
+          <td>${l.motivoPerda || ""}</td>
+          <td>${(l.proximoPasso || "").replace(/\n/g, "<br>")}</td>
+          <td>
+            <button onclick="editarLead(${idx})">Editar</button>
+            <button onclick="marcarFechado(${idx})">Fechou 600</button>
+            <button onclick="marcarPerdidoSemCaixa(${idx})">Perdido (sem caixa)</button>
+            <button onclick="agendarFollowUp(${idx})">Follow-up +3d</button>
+            <button onclick="removerLead(${idx})">X</button>
+          </td>
+        `;
+        corpo.appendChild(tr);
+      });
+    }
+
+    function editarLead(index) {
+      const l = leads[index];
+      document.getElementById("estabelecimento").value = l.estab || "";
+      document.getElementById("responsavel").value = l.resp || "";
+      document.getElementById("telefone").value = l.tel || "";
+      document.getElementById("dataVisita").value = l.data || "";
+      document.getElementById("origem").value = l.origem || "Presencial";
+      document.getElementById("categoria").value = l.categoria || "";
+      document.getElementById("produto").value = l.produto || "";
+      document.getElementById("potencial").value = l.potencial || "";
+      document.getElementById("interesse").value = l.interesse || "";
+      document.getElementById("status").value = l.status || "Novo";
+      document.getElementById("urgencia").value = l.urgencia || "";
+      document.getElementById("decisor").value = l.decisor || "";
+      document.getElementById("valorJob").value = l.valorJob || "";
+      document.getElementById("dataDecisao").value = l.dataDecisao || "";
+      document.getElementById("motivoPerda").value = l.motivoPerda || "";
+      document.getElementById("proximoPasso").value = l.proximoPasso || "";
+      indiceEdicao = index;
+      document.getElementById("modoEdicao").textContent = "Editando: " + (l.estab || "");
+    }
+
+    function removerLead(index) {
+      if (!confirm("Tem certeza que quer remover esse lead?")) return;
+      leads.splice(index, 1);
+      salvarLocal();
+      renderTabela();
+    }
+
+    function apagarTudo() {
+      if (!confirm("Tem certeza absoluta? Isso apaga TODOS os leads salvos.")) return;
+      leads = [];
+      salvarLocal();
+      renderTabela();
+      limparFormulario();
+    }
+
+    // Botões rápidos
+    function marcarFechado(index) {
+      const l = leads[index];
+      l.status = "Fechado";
+      if (!l.valorJob || l.valorJob === "0") {
+        l.valorJob = "600";
+      }
+      leads[index] = l;
+      salvarLocal();
+      renderTabela();
+    }
+
+    function marcarPerdidoSemCaixa(index) {
+      const l = leads[index];
+      l.status = "Perdido";
+      l.motivoPerda = "Sem caixa";
+      leads[index] = l;
+      salvarLocal();
+      renderTabela();
+    }
+
+    function agendarFollowUp(index) {
+      const l = leads[index];
+      const d = new Date();
+      d.setDate(d.getDate() + 3);
+      l.dataDecisao = d.toISOString().slice(0, 10);
+      if (!l.proximoPasso || l.proximoPasso.trim() === "") {
+        l.proximoPasso = "Fazer follow-up até a data de decisão (ligar ou mandar Whats).";
+      }
+      leads[index] = l;
+      salvarLocal();
+      renderTabela();
+    }
+
+    carregarLeads();
+  </script>
+</body>
+</html>
