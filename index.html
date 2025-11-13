@@ -62,7 +62,6 @@
     button.secondary { background: #e5e7eb; color: #111827; }
     button.danger { background: #fee2e2; color: #b91c1c; }
 
-    /* Botões de ação na tabela */
     td.acoes { white-space: nowrap; }
     .acao-group {
       display: flex;
@@ -170,6 +169,7 @@
       <div><label>Responsável</label><input id="responsavel" type="text"/></div>
       <div><label>Telefone</label><input id="telefone" type="text"/></div>
 
+      <div><label>Instagram</label><input id="instagram" type="text" placeholder="@perfil"/></div>
       <div><label>Data da visita</label><input id="dataVisita" type="date"/></div>
 
       <div>
@@ -211,26 +211,6 @@
       </div>
 
       <div>
-        <label>Potencial</label>
-        <select id="potencial">
-          <option value="">?</option>
-          <option value="1">1 – Baixo</option>
-          <option value="2">2 – Médio</option>
-          <option value="3">3 – Alto</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Interesse</label>
-        <select id="interesse">
-          <option value="">Selecione</option>
-          <option value="Sim">Sim</option>
-          <option value="Talvez">Talvez</option>
-          <option value="Não">Não</option>
-        </select>
-      </div>
-
-      <div>
         <label>Status</label>
         <select id="status">
           <option value="Novo">Novo</option>
@@ -238,25 +218,6 @@
           <option value="Agendado">Agendado</option>
           <option value="Fechado">Fechado</option>
           <option value="Perdido">Perdido</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Urgência</label>
-        <select id="urgencia">
-          <option value="">Não avaliada</option>
-          <option value="Alta">Alta</option>
-          <option value="Média">Média</option>
-          <option value="Baixa">Baixa</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Decisor presente?</label>
-        <select id="decisor">
-          <option value="">Não marcado</option>
-          <option value="Sim">Sim</option>
-          <option value="Não">Não</option>
         </select>
       </div>
 
@@ -321,15 +282,6 @@
         </select>
       </div>
       <div>
-        <label>Urgência</label>
-        <select id="filtroUrgencia" onchange="renderTabela()">
-          <option value="Todas">Todas</option>
-          <option value="Alta">Alta</option>
-          <option value="Média">Média</option>
-          <option value="Baixa">Baixa</option>
-        </select>
-      </div>
-      <div>
         <label>Produto</label>
         <select id="filtroProduto" onchange="renderTabela()">
           <option value="Todos">Todos</option>
@@ -356,15 +308,6 @@
         </select>
       </div>
       <div>
-        <label>Interesse</label>
-        <select id="filtroInteresse" onchange="renderTabela()">
-          <option value="Todos">Todos</option>
-          <option value="Sim">Sim</option>
-          <option value="Talvez">Talvez</option>
-          <option value="Não">Não</option>
-        </select>
-      </div>
-      <div>
         <label>Prazo decisão</label>
         <select id="filtroPrazo" onchange="renderTabela()">
           <option value="Todos">Todos</option>
@@ -382,17 +325,14 @@
         <thead>
           <tr>
             <th>Estabelecimento</th>
+            <th>Instagram</th>
             <th>Cat.</th>
             <th>Produto</th>
             <th>Resp.</th>
             <th>Tel</th>
             <th>Origem</th>
             <th>Data</th>
-            <th>Pot.</th>
-            <th>Int.</th>
             <th>Status</th>
-            <th>Urg.</th>
-            <th>Decisor</th>
             <th>R$</th>
             <th>Decisão</th>
             <th>Perda</th>
@@ -409,8 +349,6 @@
 <script>
 let leads = [];
 let indiceEdicao = null;
-
-// atalho
 const el = id => document.getElementById(id);
 
 function chaveLead(l){
@@ -436,15 +374,12 @@ function salvarLead(){
     estab,
     resp: el("responsavel").value.trim(),
     tel: el("telefone").value.trim(),
+    instagram: el("instagram").value.trim(),
     data: el("dataVisita").value || new Date().toISOString().slice(0,10),
     origem: el("origem").value,
     categoria: el("categoria").value,
     produto: el("produto").value || "Não definido",
-    potencial: el("potencial").value || "2",
-    interesse: el("interesse").value,
     status: el("status").value,
-    urgencia: el("urgencia").value,
-    decisor: el("decisor").value,
     valorJob: el("valorJob").value || "600",
     dataDecisao: el("dataDecisao").value || new Date(Date.now()+3*86400000).toISOString().slice(0,10),
     motivoPerda: el("motivoPerda").value,
@@ -464,29 +399,18 @@ function salvarLead(){
   renderTabela();
 }
 
-function limparFormulario(reset = true) {
-  // Limpa apenas campos do FORM, não mexe nos filtros
-
-  // Inputs dentro do formulário
-  document.querySelectorAll(".form-grid input").forEach(elm => {
-    elm.value = "";
-  });
-
-  // Textarea do form
+function limparFormulario(reset=true){
+  // Limpa apenas campos do formulário, não mexe nos filtros
+  document.querySelectorAll(".form-grid input").forEach(elm=>elm.value="");
+  document.querySelectorAll(".form-grid select").forEach(elm=>elm.value="");
   el("proximoPasso").value = "";
 
-  // Selects do formulário
-  document.querySelectorAll(".form-grid select").forEach(elm => {
-    elm.value = "";
-  });
-
-  // Reaplica padrões do form
   el("status").value = "Novo";
   el("origem").value = "Presencial";
 
-  if (reset) {
+  if(reset){
     indiceEdicao = null;
-    el("modoEdicao").textContent = "";
+    el("modoEdicao").textContent="";
   }
 }
 
@@ -503,19 +427,15 @@ function badge(c){
 
 function aplicarFiltros(lista){
   const fStatus    = el("filtroStatus").value;
-  const fUrg       = el("filtroUrgencia").value;
   const fProd      = el("filtroProduto").value;
   const fCat       = el("filtroCategoria").value;
-  const fInt       = el("filtroInteresse").value;
   const fPrazo     = el("filtroPrazo").value;
   const hoje       = new Date().toISOString().slice(0,10);
 
   return lista.filter(l => {
     if(fStatus !== "Todos" && l.status !== fStatus) return false;
-    if(fUrg !== "Todas" && l.urgencia !== fUrg) return false;
     if(fProd !== "Todos" && (l.produto || "Não definido") !== fProd) return false;
     if(fCat !== "Todas" && l.categoria !== fCat) return false;
-    if(fInt !== "Todos" && l.interesse !== fInt) return false;
 
     if(fPrazo !== "Todos"){
       const d = l.dataDecisao || "";
@@ -536,40 +456,37 @@ function renderTabela(){
 
   let total=0, fech=0, per=0, ag=0, estimado=0;
 
-  filtrados.forEach((l,iGlobal)=>{
+  filtrados.forEach(l=>{
     total++;
     if(l.status==="Fechado") fech++;
     if(l.status==="Perdido") per++;
     if(l.status==="Agendado") ag++;
     estimado += parseFloat(l.valorJob||0);
 
-    const indexReal = leads.indexOf(l); // mantém link para array original
+    const idx = leads.indexOf(l);
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${l.estab}</td>
+      <td>${l.instagram || ""}</td>
       <td>${l.categoria||""}</td>
       <td>${l.produto||""}</td>
       <td>${l.resp||""}</td>
       <td>${l.tel||""}</td>
       <td>${l.origem||""}</td>
       <td>${l.data||""}</td>
-      <td>${l.potencial||""}</td>
-      <td>${l.interesse||""}</td>
       <td><span class="${badge(l.status)}">${l.status||""}</span></td>
-      <td>${l.urgencia||""}</td>
-      <td>${l.decisor||""}</td>
       <td>${l.valorJob||""}</td>
       <td>${l.dataDecisao||""}</td>
       <td>${l.motivoPerda||""}</td>
       <td>${(l.proximoPasso||"").replace(/\n/g,"<br>")}</td>
       <td class="acoes">
         <div class="acao-group">
-          <button class="acao-btn primary" onclick="editarLead(${indexReal})">Editar</button>
-          <button class="acao-btn" onclick="marcarFechado(${indexReal})">Fechou 600</button>
-          <button class="acao-btn" onclick="agendarFollowUp(${indexReal})">Follow-up +3d</button>
-          <button class="acao-btn" onclick="marcarPerdido(${indexReal})">Perdido</button>
-          <button class="acao-btn danger" onclick="removerLead(${indexReal})">X</button>
+          <button class="acao-btn primary" onclick="editarLead(${idx})">Editar</button>
+          <button class="acao-btn" onclick="marcarFechado(${idx})">Fechou 600</button>
+          <button class="acao-btn" onclick="agendarFollowUp(${idx})">Follow-up +3d</button>
+          <button class="acao-btn" onclick="marcarPerdido(${idx})">Perdido</button>
+          <button class="acao-btn danger" onclick="removerLead(${idx})">X</button>
         </div>
       </td>
     `;
@@ -585,10 +502,8 @@ function renderTabela(){
 
 function limparFiltros(){
   el("filtroStatus").value    = "Todos";
-  el("filtroUrgencia").value  = "Todas";
   el("filtroProduto").value   = "Todos";
   el("filtroCategoria").value = "Todas";
-  el("filtroInteresse").value = "Todos";
   el("filtroPrazo").value     = "Todos";
   renderTabela();
 }
@@ -598,15 +513,12 @@ function editarLead(i){
   el("estabelecimento").value = l.estab || "";
   el("responsavel").value = l.resp || "";
   el("telefone").value = l.tel || "";
+  el("instagram").value = l.instagram || "";
   el("dataVisita").value = l.data || "";
   el("origem").value = l.origem || "Presencial";
   el("categoria").value = l.categoria || "";
   el("produto").value = l.produto && l.produto !== "Não definido" ? l.produto : "";
-  el("potencial").value = l.potencial || "";
-  el("interesse").value = l.interesse || "";
   el("status").value = l.status || "Novo";
-  el("urgencia").value = l.urgencia || "";
-  el("decisor").value = l.decisor || "";
   el("valorJob").value = l.valorJob || "";
   el("dataDecisao").value = l.dataDecisao || "";
   el("motivoPerda").value = l.motivoPerda || "";
@@ -674,7 +586,7 @@ function importarLeads(){
     arr.forEach(l=>{
       const c = chaveLead(l);
       if(mapa.has(c)){
-        leads[ mapa.get(c) ] = l; // sobrescreve
+        leads[ mapa.get(c) ] = l;
         atualizados++;
       } else {
         leads.push(l);
