@@ -464,16 +464,29 @@ function salvarLead(){
   renderTabela();
 }
 
-function limparFormulario(reset=true){
-  document.querySelectorAll("input, textarea").forEach(elm=>elm.value="");
-  document.querySelectorAll("select").forEach(elm=>elm.value="");
+function limparFormulario(reset = true) {
+  // Limpa apenas campos do FORM, não mexe nos filtros
 
+  // Inputs dentro do formulário
+  document.querySelectorAll(".form-grid input").forEach(elm => {
+    elm.value = "";
+  });
+
+  // Textarea do form
+  el("proximoPasso").value = "";
+
+  // Selects do formulário
+  document.querySelectorAll(".form-grid select").forEach(elm => {
+    elm.value = "";
+  });
+
+  // Reaplica padrões do form
   el("status").value = "Novo";
   el("origem").value = "Presencial";
 
-  if(reset){
+  if (reset) {
     indiceEdicao = null;
-    el("modoEdicao").textContent="";
+    el("modoEdicao").textContent = "";
   }
 }
 
