@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Painel de Prospecção – Rafa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -73,10 +74,16 @@
       background: #fee2e2;
       color: #b91c1c;
     }
+    button.outline {
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      color: #111827;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 12px;
+      min-width: 900px; /* para scroll horizontal no mobile */
     }
     th, td {
       padding: 6px 4px;
@@ -131,12 +138,47 @@
     .kpi-row span strong {
       font-weight: 700;
     }
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+    }
+    .sync-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
     @media (max-width: 900px) {
+      body {
+        padding: 10px;
+      }
+      .container {
+        padding: 12px;
+        border-radius: 8px;
+        box-shadow: none;
+      }
       .form-grid {
         grid-template-columns: repeat(1, minmax(0, 1fr));
       }
       th, td {
         font-size: 11px;
+      }
+      .actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .actions button {
+        width: 100%;
+        justify-content: center;
+      }
+      .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .sync-row {
+        flex-direction: column;
+        align-items: flex-start;
       }
     }
   </style>
@@ -146,8 +188,16 @@
     <h1>Painel de Prospecção – Pacote Temporada</h1>
     <p class="muted">
       Registre aqui os estabelecimentos que você abordar, com status, produto e próximos passos.
-      Os dados ficam salvos no seu navegador (localStorage).
+      Os dados ficam salvos no <strong>navegador deste dispositivo</strong> (localStorage).
     </p>
+
+    <div class="sync-row">
+      <span class="muted">
+        Quer copiar os dados deste aparelho para outro? Use:
+      </span>
+      <button class="outline" onclick="exportarLeads()">Exportar dados</button>
+      <button class="outline" onclick="importarLeads()">Importar dados</button>
+    </div>
 
     <h2>+ Novo Lead / Atualizar Lead</h2>
     <div class="form-grid">
@@ -313,32 +363,34 @@
       </div>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Estabelecimento</th>
-          <th>Cat.</th>
-          <th>Produto</th>
-          <th>Resp.</th>
-          <th>Tel</th>
-          <th>Origem</th>
-          <th>Data visita</th>
-          <th>Pot.</th>
-          <th>Int.</th>
-          <th>Status</th>
-          <th>Urg.</th>
-          <th>Decisor</th>
-          <th>Valor (R$)</th>
-          <th>Decisão</th>
-          <th>Motivo perda</th>
-          <th>Próximo passo</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="tabelaLeads">
-        <!-- linhas via JS -->
-      </tbody>
-    </table>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Estabelecimento</th>
+            <th>Cat.</th>
+            <th>Produto</th>
+            <th>Resp.</th>
+            <th>Tel</th>
+            <th>Origem</th>
+            <th>Data visita</th>
+            <th>Pot.</th>
+            <th>Int.</th>
+            <th>Status</th>
+            <th>Urg.</th>
+            <th>Decisor</th>
+            <th>Valor (R$)</th>
+            <th>Decisão</th>
+            <th>Motivo perda</th>
+            <th>Próximo passo</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaLeads">
+          <!-- linhas via JS -->
+        </tbody>
+      </table>
+    </div>
 
   </div>
 
@@ -615,6 +667,34 @@
       leads[index] = l;
       salvarLocal();
       renderTabela();
+    }
+
+    // Export / Import manual
+    function exportarLeads() {
+      if (!leads.length) {
+        alert("Não há leads para exportar.");
+        return;
+      }
+      const dados = JSON.stringify(leads);
+      prompt("Copie os dados e cole no outro dispositivo na opção IMPORTAR:", dados);
+    }
+
+    function importarLeads() {
+      const texto = prompt("Cole aqui os dados exportados do outro dispositivo:");
+      if (!texto) return;
+      try {
+        const arr = JSON.parse(texto);
+        if (Array.isArray(arr)) {
+          leads = arr;
+          salvarLocal();
+          renderTabela();
+          alert("Leads importados com sucesso.");
+        } else {
+          alert("Formato inválido. Certifique-se de colar exatamente o texto exportado.");
+        }
+      } catch (e) {
+        alert("JSON inválido. Certifique-se de colar exatamente o texto exportado.");
+      }
     }
 
     carregarLeads();
