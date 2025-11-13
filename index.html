@@ -83,7 +83,7 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 12px;
-      min-width: 900px; /* para scroll horizontal no mobile */
+      min-width: 900px; /* força scroll horizontal no mobile */
     }
     th, td {
       padding: 6px 4px;
@@ -170,7 +170,6 @@
       }
       .actions button {
         width: 100%;
-        justify-content: center;
       }
       .top-bar {
         flex-direction: column;
@@ -193,10 +192,10 @@
 
     <div class="sync-row">
       <span class="muted">
-        Quer copiar os dados deste aparelho para outro? Use:
+        Para copiar dados entre celular e desktop, use:
       </span>
       <button class="outline" onclick="exportarLeads()">Exportar dados</button>
-      <button class="outline" onclick="importarLeads()">Importar dados</button>
+      <button class="outline" onclick="importarLeads()">Importar dados (merge agressivo)</button>
     </div>
 
     <h2>+ Novo Lead / Atualizar Lead</h2>
@@ -669,7 +668,7 @@
       renderTabela();
     }
 
-    // Export / Import manual
+    // Exportar leads (para copiar de um dispositivo pro outro)
     function exportarLeads() {
       if (!leads.length) {
         alert("Não há leads para exportar.");
@@ -679,19 +678,55 @@
       prompt("Copie os dados e cole no outro dispositivo na opção IMPORTAR:", dados);
     }
 
+    // IMPORTAÇÃO COM MERGE AGRESSIVO (soma + atualiza duplicados)
     function importarLeads() {
       const texto = prompt("Cole aqui os dados exportados do outro dispositivo:");
       if (!texto) return;
+
       try {
         const arr = JSON.parse(texto);
-        if (Array.isArray(arr)) {
-          leads = arr;
-          salvarLocal();
-          renderTabela();
-          alert("Leads importados com sucesso.");
-        } else {
+        if (!Array.isArray(arr)) {
           alert("Formato inválido. Certifique-se de colar exatamente o texto exportado.");
+          return;
         }
+
+        const chave = l => {
+          const estab = (l.estab || "").toLowerCase().trim();
+          const tel = (l.tel || "").replace(/\D/g, "");
+          return estab + "|" + tel;
+        };
+
+        // mapa dos leads atuais → chave -> índice
+        const mapa = new Map();
+        leads.forEach((l, idx) => {
+          mapa.set(chave(l), idx);
+        });
+
+        let adicionados = 0;
+        let atualizados = 0;
+
+        arr.forEach(l => {
+          const c = chave(l);
+          if (mapa.has(c)) {
+            // sobrescreve o existente com o importado
+            const idx = mapa.get(c);
+            leads[idx] = l;
+            atualizados++;
+          } else {
+            leads.push(l);
+            mapa.set(c, leads.length - 1);
+            adicionados++;
+          }
+        });
+
+        salvarLocal();
+        renderTabela();
+
+        alert(
+          `Importação concluída.\n` +
+          `Novos leads adicionados: ${adicionados}.\n` +
+          `Leads existentes atualizados: ${atualizados}.`
+        );
       } catch (e) {
         alert("JSON inválido. Certifique-se de colar exatamente o texto exportado.");
       }
