@@ -119,6 +119,21 @@
       color: #374151;
     }
 
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 14px;
+      font-size: 12px;
+      align-items: flex-end;
+    }
+    .filters > div {
+      min-width: 140px;
+    }
+    .filters label {
+      margin-bottom: 2px;
+    }
+
     .table-wrapper {
       width: 100%;
       overflow-x: auto;
@@ -134,6 +149,7 @@
       .form-grid { grid-template-columns: 1fr; }
       th, td { font-size: 11px; }
       .acao-btn { font-size: 9px; padding: 3px 4px; }
+      .filters > div { min-width: 48%; }
     }
   </style>
 </head>
@@ -284,11 +300,81 @@
 
     <!-- KPIs -->
     <div class="kpi-row">
-      <span><strong>Total:</strong> <span id="totalLeads">0</span></span>
+      <span><strong>Leads (filtrados):</strong> <span id="totalLeads">0</span></span>
       <span><strong>Fechados:</strong> <span id="kpiFechados">0</span></span>
       <span><strong>Agendados:</strong> <span id="kpiAgendados">0</span></span>
       <span><strong>Perdidos:</strong> <span id="kpiPerdidos">0</span></span>
       <span><strong>Estimado:</strong> R$ <span id="kpiValorTotal">0</span></span>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filters">
+      <div>
+        <label>Status</label>
+        <select id="filtroStatus" onchange="renderTabela()">
+          <option value="Todos">Todos</option>
+          <option value="Novo">Novo</option>
+          <option value="Em conversa">Em conversa</option>
+          <option value="Agendado">Agendado</option>
+          <option value="Fechado">Fechado</option>
+          <option value="Perdido">Perdido</option>
+        </select>
+      </div>
+      <div>
+        <label>Urgência</label>
+        <select id="filtroUrgencia" onchange="renderTabela()">
+          <option value="Todas">Todas</option>
+          <option value="Alta">Alta</option>
+          <option value="Média">Média</option>
+          <option value="Baixa">Baixa</option>
+        </select>
+      </div>
+      <div>
+        <label>Produto</label>
+        <select id="filtroProduto" onchange="renderTabela()">
+          <option value="Todos">Todos</option>
+          <option value="Pacote Vídeos Temporada">Pacote Vídeos Temporada</option>
+          <option value="Tratamento Imagens iFood">Tratamento Imagens iFood</option>
+          <option value="Ambos">Ambos</option>
+          <option value="Não definido">Não definido</option>
+        </select>
+      </div>
+      <div>
+        <label>Categoria</label>
+        <select id="filtroCategoria" onchange="renderTabela()">
+          <option value="Todas">Todas</option>
+          <option value="Restaurante">Restaurante</option>
+          <option value="Café / Padaria">Café / Padaria</option>
+          <option value="Sorveteria / Açaí">Sorveteria / Açaí</option>
+          <option value="Bar / Pub">Bar / Pub</option>
+          <option value="Loja de Roupas / Surf">Loja de Roupas / Surf</option>
+          <option value="Petshop">Petshop</option>
+          <option value="Clínica Estética / Beleza">Clínica Estética / Beleza</option>
+          <option value="Academia / Studio">Academia / Studio</option>
+          <option value="Mercado / Empório">Mercado / Empório</option>
+          <option value="Outro comércio">Outro comércio</option>
+        </select>
+      </div>
+      <div>
+        <label>Interesse</label>
+        <select id="filtroInteresse" onchange="renderTabela()">
+          <option value="Todos">Todos</option>
+          <option value="Sim">Sim</option>
+          <option value="Talvez">Talvez</option>
+          <option value="Não">Não</option>
+        </select>
+      </div>
+      <div>
+        <label>Prazo decisão</label>
+        <select id="filtroPrazo" onchange="renderTabela()">
+          <option value="Todos">Todos</option>
+          <option value="Vencidas">Decisão vencida</option>
+          <option value="Futuras">Decisão futura</option>
+        </select>
+      </div>
+      <div>
+        <button class="secondary" onclick="limparFiltros()">Limpar filtros</button>
+      </div>
     </div>
 
     <div class="table-wrapper">
@@ -324,7 +410,7 @@
 let leads = [];
 let indiceEdicao = null;
 
-// atalhos pros inputs (evita colisão com window.status etc)
+// atalho
 const el = id => document.getElementById(id);
 
 function chaveLead(l){
@@ -353,7 +439,7 @@ function salvarLead(){
     data: el("dataVisita").value || new Date().toISOString().slice(0,10),
     origem: el("origem").value,
     categoria: el("categoria").value,
-    produto: el("produto").value,
+    produto: el("produto").value || "Não definido",
     potencial: el("potencial").value || "2",
     interesse: el("interesse").value,
     status: el("status").value,
@@ -402,18 +488,49 @@ function badge(c){
   }
 }
 
+function aplicarFiltros(lista){
+  const fStatus    = el("filtroStatus").value;
+  const fUrg       = el("filtroUrgencia").value;
+  const fProd      = el("filtroProduto").value;
+  const fCat       = el("filtroCategoria").value;
+  const fInt       = el("filtroInteresse").value;
+  const fPrazo     = el("filtroPrazo").value;
+  const hoje       = new Date().toISOString().slice(0,10);
+
+  return lista.filter(l => {
+    if(fStatus !== "Todos" && l.status !== fStatus) return false;
+    if(fUrg !== "Todas" && l.urgencia !== fUrg) return false;
+    if(fProd !== "Todos" && (l.produto || "Não definido") !== fProd) return false;
+    if(fCat !== "Todas" && l.categoria !== fCat) return false;
+    if(fInt !== "Todos" && l.interesse !== fInt) return false;
+
+    if(fPrazo !== "Todos"){
+      const d = l.dataDecisao || "";
+      if(!d) return false;
+      if(fPrazo === "Vencidas" && !(d < hoje)) return false;
+      if(fPrazo === "Futuras" && !(d >= hoje)) return false;
+    }
+
+    return true;
+  });
+}
+
 function renderTabela(){
   const tbody = el("tabelaLeads");
   tbody.innerHTML="";
 
+  const filtrados = aplicarFiltros(leads);
+
   let total=0, fech=0, per=0, ag=0, estimado=0;
 
-  leads.forEach((l,i)=>{
+  filtrados.forEach((l,iGlobal)=>{
     total++;
     if(l.status==="Fechado") fech++;
     if(l.status==="Perdido") per++;
     if(l.status==="Agendado") ag++;
     estimado += parseFloat(l.valorJob||0);
+
+    const indexReal = leads.indexOf(l); // mantém link para array original
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -435,11 +552,11 @@ function renderTabela(){
       <td>${(l.proximoPasso||"").replace(/\n/g,"<br>")}</td>
       <td class="acoes">
         <div class="acao-group">
-          <button class="acao-btn primary" onclick="editarLead(${i})">Editar</button>
-          <button class="acao-btn" onclick="marcarFechado(${i})">Fechou 600</button>
-          <button class="acao-btn" onclick="agendarFollowUp(${i})">Follow-up +3d</button>
-          <button class="acao-btn" onclick="marcarPerdido(${i})">Perdido</button>
-          <button class="acao-btn danger" onclick="removerLead(${i})">X</button>
+          <button class="acao-btn primary" onclick="editarLead(${indexReal})">Editar</button>
+          <button class="acao-btn" onclick="marcarFechado(${indexReal})">Fechou 600</button>
+          <button class="acao-btn" onclick="agendarFollowUp(${indexReal})">Follow-up +3d</button>
+          <button class="acao-btn" onclick="marcarPerdido(${indexReal})">Perdido</button>
+          <button class="acao-btn danger" onclick="removerLead(${indexReal})">X</button>
         </div>
       </td>
     `;
@@ -453,6 +570,16 @@ function renderTabela(){
   el("kpiValorTotal").textContent=estimado.toFixed(0);
 }
 
+function limparFiltros(){
+  el("filtroStatus").value    = "Todos";
+  el("filtroUrgencia").value  = "Todas";
+  el("filtroProduto").value   = "Todos";
+  el("filtroCategoria").value = "Todas";
+  el("filtroInteresse").value = "Todos";
+  el("filtroPrazo").value     = "Todos";
+  renderTabela();
+}
+
 function editarLead(i){
   const l = leads[i];
   el("estabelecimento").value = l.estab || "";
@@ -461,7 +588,7 @@ function editarLead(i){
   el("dataVisita").value = l.data || "";
   el("origem").value = l.origem || "Presencial";
   el("categoria").value = l.categoria || "";
-  el("produto").value = l.produto || "";
+  el("produto").value = l.produto && l.produto !== "Não definido" ? l.produto : "";
   el("potencial").value = l.potencial || "";
   el("interesse").value = l.interesse || "";
   el("status").value = l.status || "Novo";
@@ -511,7 +638,6 @@ function exportarLeads(){
   navigator.clipboard.writeText(txt).then(()=>{
     alert("Copiado! Cole no outro dispositivo para importar.");
   }).catch(()=>{
-    // fallback
     prompt("Copie os dados:", txt);
   });
 }
